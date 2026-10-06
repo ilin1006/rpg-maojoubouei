@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔王様の魔王城防衛戦 〜勇者パーティ撃退RPG〜</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(ellipse at center, #1a0a2e 0%, #0a0010 100%);
+            color: #e0d0ff;
+            font-family: 'Segoe UI', 'Meiryo', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 12px;
+        }
+
+        #game-container {
+            width: 860px;
+            max-width: 100%;
+        }
+
+        /* ===== タイトル ===== */
+        .game-title {
+            text-align: center;
+            padding: 10px 14px;
+            background: linear-gradient(135deg, #3a0050, #1a0030);
+            border: 2px solid #9b30c0;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 0 16px rgba(155, 48, 192, 0.5);
+        }
+        .game-title h1 {
+            font-size: 18px;
+            color: #f0a0ff;
+            text-shadow: 0 0 10px #cc44ff;
+            letter-spacing: 3px;
+        }
+        .game-title .subtitle {
+            font-size: 11px;
+            color: #aa80cc;
+            margin-top: 2px;
+        }
+        .challenge-badge {
+            display: inline-block;
+            background: #4a0070;
+            border: 1px solid #cc66ff;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: 12px;
+            color: #ee99ff;
+            margin-top: 4px;
+        }
+
+        /* ===== 2カラムレイアウト ===== */
+        .battle-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: start;
+        }
+
+        /* ===== 魔王ステータス ===== */
+        .boss-panel {
+            background: linear-gradient(135deg, #1a2a1a, #0a1a0a);
+            border: 2px solid #44aa44;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .boss-panel::before {
+            content: '👑';
+            position: absolute;
+            right: 12px;
+            top: 8px;
+            font-size: 26px;
+            opacity: 0.15;
+        }
+        .boss-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: #66ff66;
+            text-shadow: 0 0 8px #44cc44;
+        }
+        .boss-stats-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 4px;
+            font-size: 12px;
+            color: #99cc99;
+        }
+        .hp-bar-wrap { margin-top: 7px; }
+        .hp-label {
+            font-size: 11px;
+            color: #88bb88;
+            margin-bottom: 3px;
+        }
+        .hp-bar {
+            width: 100%;
+            background: #1a3a1a;
+            border-radius: 4px;
+            height: 12px;
+            overflow: hidden;
+            border: 1px solid #336633;
+        }
+        .hp-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            background: linear-gradient(90deg, #2a7a2a, #44dd44);
+        }
+        .mp-bar-wrap { margin-top: 5px; }
+        .mp-label {
+            font-size: 11px;
+            color: #8899cc;
+            margin-bottom: 3px;
+        }
+        .mp-bar {
+            width: 100%;
+            background: #12102a;
+            border-radius: 4px;
+            height: 9px;
+            overflow: hidden;
+            border: 1px solid #223366;
+        }
+        .mp-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            background: linear-gradient(90deg, #2233aa, #4488ff);
+        }
+        .boss-status-effects {
+            min-height: 16px;
+            font-size: 10px;
+            color: #ffdd44;
+            margin-top: 3px;
+        }
+
+        /* ===== スキルボタン（左カラム下） ===== */
+        .controls-label {
+            font-size: 11px;
+            color: #886699;
+            margin-bottom: 5px;
+        }
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+        .skill-btn {
+            background: linear-gradient(135deg, #2a0040, #1a0030);
+            color: #e0b0ff;
+            border: 1px solid #7722aa;
+            border-radius: 6px;
+            padding: 9px 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .skill-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #4a0070, #300050);
+            border-color: #bb44ee;
+            box-shadow: 0 0 10px rgba(180, 60, 240, 0.4);
+        }
+        .skill-btn:disabled {
+            background: #111118;
+            border-color: #333344;
+            color: #555566;
+            cursor: not-allowed;
+        }
+        .skill-btn .skill-name {
+            display: block;
+            color: #dd88ff;
+            font-size: 12px;
+        }
+        .skill-btn .skill-desc {
+            display: block;
+            font-size: 9px;
+            color: #886699;
+            font-weight: normal;
+            margin-top: 2px;
+        }
+
+        /* ===== 勇者パーティ（右カラム） ===== */
+        .party-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .party-header h3 {
+            color: #ffaa44;
+            font-size: 13px;
+        }
+        .party-level-badge {
+            background: #3a2a00;
+            border: 1px solid #ffaa44;
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 11px;
+            color: #ffcc66;
+        }
+        .party-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .member-card {
+            background: #1e1428;
+            border: 1px solid #553355;
+            border-radius: 8px;
+            padding: 9px 10px;
+            transition: border-color 0.3s;
+        }
+        .member-card.active-turn {
+            border-color: #ffaa00;
+            box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
+        }
+        .member-card.dead {
+            opacity: 0.35;
+            background: #111118;
+            border-color: #333333;
+        }
+        .member-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .member-name {
+            font-weight: bold;
+            font-size: 13px;
+            color: #ddaaff;
+        }
+        .member-role {
+            font-size: 9px;
+            color: #886699;
+            background: #2a1a38;
+            border-radius: 3px;
+            padding: 1px 4px;
+        }
+        .member-hp-text {
+            font-size: 10px;
+            color: #cc99cc;
+            margin-top: 2px;
+        }
+        .member-hp-bar {
+            width: 100%;
+            background: #2a1a38;
+            border-radius: 3px;
+            height: 7px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+        .member-hp-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #993399, #dd55ff);
+            transition: width 0.4s ease;
+        }
+        .member-mp-text {
+            font-size: 10px;
+            color: #88aaff;
+            margin-top: 2px;
+        }
+        .member-mp-bar {
+            width: 100%;
+            background: #12102a;
+            border-radius: 3px;
+            height: 5px;
+            overflow: hidden;
+            margin-top: 2px;
+        }
+        .member-mp-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #2233aa, #4466ff);
+            transition: width 0.4s ease;
+        }
+        .member-status {
+            font-size: 9px;
+            color: #ffcc44;
+            min-height: 13px;
+            margin-top: 2px;
+        }
+
+        /* ===== バトルログ ===== */
+        #battle-log {
+            background: #080810;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 10px 12px;
+            height: 140px;
+            overflow-y: auto;
+            margin-bottom: 8px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        #battle-log::-webkit-scrollbar { width: 5px; }
+        #battle-log::-webkit-scrollbar-track { background: #111; }
+        #battle-log::-webkit-scrollbar-thumb { background: #442266; border-radius: 3px; }
+
+        .log-boss    { color: #66ff88; }
+        .log-hero    { color: #ff7777; }
+        .log-warrior { color: #ff9944; }
+        .log-mage    { color: #77aaff; }
+        .log-priest  { color: #ffdd66; }
+        .log-system  { color: #aa88cc; font-style: italic; }
+        .log-damage  { color: #ff4444; font-weight: bold; }
+        .log-heal    { color: #44ff88; font-weight: bold; }
+        .log-sep     { color: #333355; }
+
+        /* ===== フッター情報 ===== */
+        .footer-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #665577;
+        }
+
+        /* ===== モーダル ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: linear-gradient(135deg, #1a0028, #0e0018);
+            border: 2px solid #9944cc;
+            border-radius: 14px;
+            padding: 28px 32px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(153, 68, 204, 0.6);
+        }
+        .modal-box.victory { border-color: #44cc44; box-shadow: 0 0 40px rgba(68, 204, 68, 0.6); }
+        .modal-box.defeat  { border-color: #cc4444; box-shadow: 0 0 40px rgba(204, 68, 68, 0.6); }
+        .modal-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .modal-box.victory .modal-title { color: #88ff88; text-shadow: 0 0 12px #44ff44; }
+        .modal-box.defeat  .modal-title { color: #ff8888; text-shadow: 0 0 12px #ff4444; }
+        .modal-body {
+            font-size: 13px;
+            color: #ccaaee;
+            line-height: 1.7;
+            margin-bottom: 18px;
+        }
+        .modal-btn {
+            background: linear-gradient(135deg, #440066, #220044);
+            color: #e0b0ff;
+            border: 1px solid #9944cc;
+            border-radius: 8px;
+            padding: 11px 26px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-btn:hover {
+            background: linear-gradient(135deg, #660099, #440077);
+            box-shadow: 0 0 14px rgba(153, 68, 204, 0.6);
+        }
+        .strengthen-list {
+            text-align: left;
+            background: #1a0a28;
+            border: 1px solid #553355;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 10px 0;
+            font-size: 12px;
+            color: #ffcc88;
+            line-height: 1.9;
+        }
+
+        /* ===== ターン表示 ===== */
+        .turn-indicator {
+            text-align: center;
+            font-size: 12px;
+            color: #775599;
+            margin-bottom: 6px;
+            min-height: 18px;
+        }
+        .turn-indicator.player-turn { color: #88ffaa; }
+        .turn-indicator.enemy-turn  { color: #ff8866; }
+
+        /* ===== アニメーション ===== */
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        @keyframes flash-red {
+            0%,100% { background: #1e1428; }
+            50% { background: #3a1010; }
+        }
+        @keyframes flash-green {
+            0%,100% { background: #1a2a1a; }
+            50% { background: #102a10; }
+        }
+        .anim-shake { animation: shake 0.3s ease; }
+        .anim-flash-red { animation: flash-red 0.4s ease; }
+        .anim-flash-green { animation: flash-green 0.4s ease; }
+
+        /* ===== ターゲット選択モード ===== */
+        .target-select-banner {
+            text-align: center;
+            background: linear-gradient(135deg, #3a1500, #1a0800);
+            border: 2px solid #ff8800;
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #ffbb44;
+            display: none;
+            animation: pulse-border 0.8s infinite alternate;
+        }
+        .target-select-banner.show { display: block; }
+        @keyframes pulse-border {
+            from { border-color: #ff8800; box-shadow: 0 0 6px rgba(255,136,0,0.4); }
+            to   { border-color: #ffcc44; box-shadow: 0 0 14px rgba(255,200,0,0.7); }
+        }
+        .member-card.targetable {
+            cursor: pointer;
+            border-color: #ff8800;
+            box-shadow: 0 0 10px rgba(255,136,0,0.5);
+            transition: all 0.15s;
+        }
+        .member-card.targetable:hover {
+            border-color: #ffcc00;
+            box-shadow: 0 0 18px rgba(255,200,0,0.8);
+            transform: translateY(-2px);
+        }
+        .member-card.dead.targetable {
+            cursor: not-allowed;
+            border-color: #333;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* ===== スタート画面 ===== */
+        #start-screen {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse at center, #1a0a2e 0%, #04000e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        #start-screen.hidden {
+            display: none;
+        }
+        .start-castle {
+            font-size: 52px;
+            margin-bottom: 6px;
+            filter: drop-shadow(0 0 14px rgba(180,60,255,0.8));
+        }
+        .start-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f0a0ff;
+            text-shadow: 0 0 14px #cc44ff, 0 0 30px #8800cc;
+            letter-spacing: 3px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .start-subtitle {
+            font-size: 12px;
+            color: #aa80cc;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        /* キャラ紹介 */
+        .start-party {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .start-member {
+            background: linear-gradient(135deg, #1e1428, #120e20);
+            border: 1px solid #553366;
+            border-radius: 8px;
+            padding: 8px 10px;
+            text-align: center;
+            width: 90px;
+            transition: transform 0.2s;
+        }
+        .start-member:hover { transform: translateY(-3px); border-color: #aa44ee; }
+        .start-member .sm-icon  { font-size: 22px; }
+        .start-member .sm-name  { font-size: 12px; font-weight: bold; color: #ddaaff; margin-top: 3px; }
+        .start-member .sm-role  { font-size: 9px; color: #886699; margin-top: 1px; }
+        .start-member .sm-desc  { font-size: 9px; color: #665577; margin-top: 3px; line-height: 1.4; }
+        /* VS */
+        .start-vs {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6644;
+            text-shadow: 0 0 8px #ff4400;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+        /* 説明 */
+        .start-desc {
+            background: #110820;
+            border: 1px solid #442266;
+            border-radius: 8px;
+            padding: 10px 16px;
+            max-width: 460px;
+            width: 100%;
+            font-size: 11px;
+            color: #aa88cc;
+            line-height: 1.8;
+            margin-bottom: 18px;
+            text-align: left;
+        }
+        .start-desc b { color: #dd99ff; }
+        /* スタートボタン */
+        .start-btn {
+            background: linear-gradient(135deg, #5500aa, #330077);
+            color: #f0c0ff;
+            border: 2px solid #aa44ff;
+            border-radius: 10px;
+            padding: 13px 44px;
+            font-size: 17px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 16px rgba(150,50,255,0.5);
+            animation: btn-pulse 2s ease-in-out infinite;
+        }
+        .start-btn:hover {
+            background: linear-gradient(135deg, #7700cc, #550099);
+            box-shadow: 0 0 30px rgba(180,80,255,0.8);
+            transform: scale(1.05);
+        }
+        @keyframes btn-pulse {
+            0%,100% { box-shadow: 0 0 16px rgba(150,50,255,0.5); }
+            50%      { box-shadow: 0 0 30px rgba(200,100,255,0.9); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== スタート画面 ===== -->
+<div id="start-screen">
+    <div class="start-castle">🏰</div>
+    <div class="start-title">魔王様の魔王城防衛戦</div>
+    <div class="start-subtitle">〜 勇者パーティ撃退RPG 〜</div>
+
+    <div class="start-vs">👑 魔王 VS 勇者パーティ</div>
+    <div class="start-party">
+        <div class="start-member">
+            <div class="sm-icon">🗡️</div>
+            <div class="sm-name">勇者</div>
+            <div class="sm-role">バランス型</div>
+            <div class="sm-desc">聖なる剣閃で高ダメージ</div>
+        </div>
+        <div class="start-member">
+            <div class="sm-icon">🛡️</div>
+            <div class="sm-name">戦士</div>
+            <div class="sm-role">高耐久・高火力</div>
+            <div class="sm-desc">全力斬りが脅威</div>
+        </div>
+        <div class="start-member">            <div class="sm-icon">🔮</div>
+            <div class="sm-name">魔法使い</div>
+            <div class="sm-role">全体魔法</div>
+            <div class="sm-desc">メテオが全員を直撃</div>
+        </div>
+        <div class="start-member">
+            <div class="sm-icon">✨</div>
+            <div class="sm-name">僧侶</div>
+            <div class="sm-role">回復・蘇生</div>
+            <div class="sm-desc">仲間を生き返らせる</div>
+        </div>
+    </div>
+
+    <div class="start-desc">
+        ⚔ <b>操作方法</b><br>
+        ・スキルボタンを押して魔王の行動を選択<br>
+        ・単体スキルは攻撃したいキャラをクリックして対象を指定<br>
+        👹 <b>ポイント</b><br>
+        ・勇者パーティを全滅させれば撃退成功！<br>
+        ・撃退するたびにパーティが<b>強化</b>されて戻ってくる<br>
+        ・魔王は HP が 0 になると1度だけ<b>復活</b>できる<br>
+        ・<b>魔王の圧制</b>（MP: 400）は必中の超火力奥義
+    </div>
+
+    <button class="start-btn" onclick="startGame()">⚔ ゲーム開始 ⚔</button>
+</div>
+
+<div id="game-container">
+
+    <!-- タイトル -->
+    <div class="game-title">
+        <h1>🏰 魔王様の魔王城防衛戦 🏰</h1>
+        <div class="subtitle">〜 勇者パーティ撃退RPG 〜</div>
+        <div class="challenge-badge">撃退数：<span id="kill-count">0</span> 回　／　挑戦回数：<span id="challenge-count">1</span> 回目</div>
+    </div>
+
+    <!-- 2カラムレイアウト（左:魔王+スキル / 右:パーティ） -->
+    <div class="battle-layout">
+
+        <!-- 左カラム：魔王 + スキル -->
+        <div class="left-col">
+            <div class="boss-panel" id="boss-panel">
+                <div class="boss-name">👑 大魔王 デウス・エクス・マキナ</div>
+                <div class="boss-stats-row">
+                    <span>攻撃力：<span id="boss-atk">--</span></span>
+                    <span>防御力：<span id="boss-def">--</span></span>
+                </div>
+                <div class="hp-bar-wrap">
+                    <div class="hp-label">HP：<span id="boss-hp">7000</span> / <span id="boss-max-hp">7000</span></div>
+                    <div class="hp-bar"><div class="hp-fill" id="boss-hp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="mp-bar-wrap">
+                    <div class="mp-label">MP：<span id="boss-mp">400</span> / <span id="boss-max-mp">400</span>　<span style="font-size:9px;color:#556688;">（毎ターン +20 再生）</span></div>
+                    <div class="mp-bar"><div class="mp-fill" id="boss-mp-fill" style="width:100%"></div></div>
+                </div>
+                <div class="boss-status-effects" id="boss-status-effects"></div>
+            </div>
+
+            <!-- ターン表示 -->
+            <div class="turn-indicator" id="turn-indicator">ゲーム開始！</div>
+
+            <!-- ターゲット選択バナー -->
+            <div class="target-select-banner" id="target-banner">
+                👆 攻撃する相手を選択してください　<span id="target-banner-skill"></span>
+                　<button onclick="cancelTargetSelect()" style="
+                    background:#3a1500;border:1px solid #ff8800;color:#ffaa44;
+                    border-radius:4px;padding:2px 10px;font-size:11px;cursor:pointer;margin-left:8px;
+                ">キャンセル</button>
+            </div>
+
+            <!-- コントロール -->
+            <div class="controls-label">🌑 魔王の行動を選べ</div>
+            <div class="controls-grid" id="controls-grid">
+                <button class="skill-btn" id="btn-s1" onclick="playerAction(0)">
+                    <span class="skill-name">⚔ 闇の一撃</span>
+                    <span class="skill-desc">単体に物理ダメージ　MP不要</span>
+                </button>
+                <button class="skill-btn" id="btn-s2" onclick="playerAction(1)">
+                    <span class="skill-name">🌑 ダークネス</span>
+                    <span class="skill-desc">全体に魔法ダメージ　MP: 40</span>
+                </button>
+                <button class="skill-btn" id="btn-s3" onclick="playerAction(2)">
+                    <span class="skill-name">💥 魔王の圧制</span>
+                    <span class="skill-desc">単体超火力（必中）　MP: 400</span>
+                </button>
+                <button class="skill-btn" id="btn-s4" onclick="playerAction(3)">
+                    <span class="skill-name">🩸 生命吸収</span>
+                    <span class="skill-desc">単体攻撃＋HP回復　MP: 30</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 右カラム：勇者パーティ -->
+        <div class="right-col">
+            <div class="party-header">
+                <h3>⚔️ 挑みし勇者パーティ</h3>
+                <span class="party-level-badge">Lv. <span id="party-level">1</span>　強化 <span id="strengthen-count">0</span> 回</span>
+            </div>
+            <div class="party-grid" id="party-grid"></div>
+        </div>
+
+    </div><!-- /.battle-layout -->
+
+    <!-- バトルログ -->
+    <div id="battle-log"></div>
+
+    <div class="footer-info">
+        <span>ターン：<span id="turn-count">0</span></span>
+        <span>最高撃退数を目指せ！</span>
+    </div>
+
+</div>
+
+<!-- 勝利モーダル -->
+<div class="modal-overlay" id="modal-victory">
+    <div class="modal-box victory">
+        <div class="modal-title">🎉 撃退成功！</div>
+        <div class="modal-body" id="modal-victory-body"></div>
+        <button class="modal-btn" onclick="startNextBattle()">次の挑戦者を迎え撃つ！</button>
+    </div>
+</div>
+
+<!-- 敗北モーダル -->
+<div class="modal-overlay" id="modal-defeat">
+    <div class="modal-box defeat">
+        <div class="modal-title">💀 魔王、討伐される…</div>
+        <div class="modal-body" id="modal-defeat-body"></div>
+        <button class="modal-btn" onclick="restartGame()">再び立ち上がる！（ゲームリセット）</button>
+    </div>
+</div>
+
+<script>
+// =============================================
+//  定数・初期設定
+// =============================================
+const BOSS_BASE = { maxHp: 7000, atk: 3000, def: 2400, maxMp: 400, mpRegen: 20 };
+
+// スキルMPコスト定義
+const BOSS_MP_COST = { 0: 0, 1: 40, 2: 400, 3: 30 };
+
+// 基本パーティ定義（Lv1ベース）
+const BASE_PARTY = [
+    {
+        id: 'hero', name: 'アレス', role: '勇者', icon: '🗡️',
+        hp: 400, maxHp: 400, atk: 55, def: 18, spd: 4,
+        mp: 80, maxMp: 80, mpRegen: 10,
+        skills: [
+            { name: '勇者の一撃',    type: 'atk',   power: 1.0, target: 'single', mpCost: 0  },
+            { name: '聖なる剣閃',    type: 'atk',   power: 1.5, target: 'single', mpCost: 15 },
+        ],
+        statusEffects: []
+    },
+    {
+        id: 'warrior', name: 'ディヴァイン', role: '戦士', icon: '🛡️',
+        hp: 600, maxHp: 600, atk: 65, def: 30, spd: 2,
+        mp: 60, maxMp: 60, mpRegen: 8,
+        skills: [
+            { name: '強撃',          type: 'atk',   power: 1.2, target: 'single', mpCost: 0  },
+            { name: '全力斬り',      type: 'atk',   power: 2.0, target: 'single', mpCost: 20 },
+        ],
+        statusEffects: []
+    },
+    {
+        id: 'mage', name: 'メイア', role: '魔法使い', icon: '🔮',
+        hp: 250, maxHp: 250, atk: 80, def: 8, spd: 3,
+        mp: 120, maxMp: 120, mpRegen: 15,
+        skills: [
+            { name: 'ファイア',        type: 'magic', power: 0.9, target: 'single', mpCost: 20 },
+            { name: 'メテオストライク', type: 'magic', power: 0.7, target: 'all',    mpCost: 35 },
+        ],
+        statusEffects: []
+    },
+    {
+        id: 'priest', name: 'ホライズ', role: '僧侶', icon: '✨',
+        hp: 300, maxHp: 300, atk: 30, def: 12, spd: 5,
+        mp: 100, maxMp: 100, mpRegen: 12,
+        skills: [
+            { name: '攻撃',           type: 'atk',   power: 0.7, target: 'single', mpCost: 0  },
+            { name: 'ホーリーライト', type: 'magic', power: 0.8, target: 'single', mpCost: 18 },
+        ],
+        statusEffects: []
+    }
+];
+
+// 強化段階ごとの追加スキル（敗北回数で解放）
+const UPGRADE_SKILLS = [
+    // 1回目強化
+    {
+        hero:    { name: '希望の光',  type: 'buff_atk', power: 1.3, target: 'self_party', desc: 'パーティ全員の攻撃力UP',  mpCost: 25 },
+        warrior: { name: '鉄壁防御',  type: 'buff_def', power: 1.4, target: 'self_party', desc: 'パーティ全員の防御力UP',  mpCost: 25 },
+        mage:    { name: 'ブリザード', type: 'magic',   power: 0.8, target: 'all',         desc: '全体魔法',               mpCost: 40 },
+        priest:  { name: '大回復',    type: 'heal',     power: 1.0, target: 'all_ally',    desc: 'パーティ全員を回復',      mpCost: 35 },
+    },
+    // 2回目強化
+    {
+        hero:    { name: '真・勇者の剣',  type: 'atk',     power: 2.5, target: 'single',   desc: '超強力な単体攻撃',       mpCost: 30 },
+        warrior: { name: '死神の一閃',    type: 'atk',     power: 3.0, target: 'single',   desc: '最大火力の単体攻撃',     mpCost: 35 },
+        mage:    { name: '魔王消滅呪文',  type: 'magic',   power: 1.5, target: 'single',   desc: '単体超高火力魔法',       mpCost: 50 },
+        priest:  { name: '聖域展開',      type: 'barrier', power: 1.0, target: 'all_ally', desc: 'パーティに防御障壁',      mpCost: 40 },
+    },
+    // 3回目以降（繰り返し強化）
+    {
+        hero:    { name: '天空の裁き',  type: 'magic',  power: 2.0, target: 'all',        desc: '全体超高火力',           mpCost: 55 },
+        warrior: { name: '無双乱舞',    type: 'atk',    power: 1.2, target: 'all',        desc: '全体高火力攻撃',         mpCost: 45 },
+        mage:    { name: '核爆発魔法',  type: 'magic',  power: 1.8, target: 'all',        desc: '全体最強魔法',           mpCost: 65 },
+        priest:  { name: '蘇生',        type: 'revive', power: 1.0, target: 'dead_ally',  desc: '倒れた仲間を復活',       mpCost: 50 },
+    },
+];
+
+// =============================================
+//  ゲーム状態
+// =============================================
+let state = {
+    boss: null,
+    party: [],
+    turnCount: 0,
+    killCount: 0,
+    challengeCount: 1,
+    strengthenCount: 0,       // 強化回数（＝敗北回数）
+    partyLevel: 1,
+    phase: 'player',          // 'player' | 'enemy' | 'over'
+    isAnimating: false,
+    bossStatusEffects: [],    // { name, turnsLeft }
+    bossRevived: false,       // 1回限りの復活フラグ
+    pendingSkill: null,       // ターゲット選択待ちのスキル番号
+};
+
+// =============================================
+//  初期化
+// =============================================
+function initGame() {
+    // 魔王
+    state.boss = {
+        hp: BOSS_BASE.maxHp,
+        maxHp: BOSS_BASE.maxHp,
+        atk: BOSS_BASE.atk,
+        def: BOSS_BASE.def,
+        mp: BOSS_BASE.maxMp,
+        maxMp: BOSS_BASE.maxMp,
+        mpRegen: BOSS_BASE.mpRegen,
+    };
+
+    // パーティ（強化込みで生成）
+    state.party = buildParty(state.strengthenCount);
+    state.turnCount = 0;
+    state.phase = 'player';
+    state.isAnimating = false;
+    state.bossStatusEffects = [];
+    state.bossRevived = false;
+    state.pendingSkill = null;
+
+    renderAll();
+    setButtonsEnabled(true);
+
+    // ログ初期化
+    const logEl = document.getElementById('battle-log');
+    logEl.innerHTML = '';
+    addLog('system', `━━━━━━ 第 ${state.challengeCount} 回目の挑戦 ━━━━━━`);
+    if (state.strengthenCount === 0) {
+        addLog('system', '不届き者どもが玉座へ踏み込んできた！返り討ちにしてくれる！');
+    } else {
+        addLog('system', `勇者パーティが強化(${state.strengthenCount}回目)されて戻ってきた！レベル ${state.partyLevel}！`);
+        addLog('system', '怯むな！魔王の力を見せてやれ！');
+    }
+    setTurnIndicator('player');
+}
+
+// パーティ生成（強化適用）
+function buildParty(strengthenCount) {
+    const scaleFactor = 1 + strengthenCount * 0.3; // 強化1回ごとにステータス30%UP
+    const lvBonus = 1 + strengthenCount * 8;       // レベル表示用
+
+    state.partyLevel = lvBonus;
+
+    return BASE_PARTY.map(base => {
+        const member = JSON.parse(JSON.stringify(base));
+        member.maxHp = Math.floor(base.maxHp * scaleFactor);
+        member.hp    = member.maxHp;
+        member.atk   = Math.floor(base.atk * scaleFactor);
+        member.def   = Math.floor(base.def * scaleFactor);
+        member.spd   = base.spd;
+        // MPも強化に応じてスケール
+        member.maxMp   = Math.floor(base.maxMp * scaleFactor);
+        member.mp      = member.maxMp;
+        member.mpRegen = base.mpRegen;
+        member.statusEffects = [];
+        member.buffAtk = 1.0;
+        member.buffDef = 1.0;
+        member.hasBarrier = false;
+
+        // 強化によるスキル追加
+        const skills = BASE_PARTY.find(b => b.id === base.id).skills.map(s => ({...s}));
+        for (let i = 0; i < strengthenCount && i < UPGRADE_SKILLS.length; i++) {
+            const upgrade = UPGRADE_SKILLS[i];
+            const extra = upgrade[base.id];
+            if (extra) skills.push({...extra});
+        }
+        // 3回以上は最後の強化セットをさらに強化して追加
+        if (strengthenCount >= 3) {
+            const extra = UPGRADE_SKILLS[2][base.id];
+            if (extra) {
+                const extraCopy = {...extra};
+                extraCopy.power = Math.round((extra.power * (1 + (strengthenCount - 3) * 0.3)) * 10) / 10;
+                extraCopy.name = '【超】' + extra.name;
+                skills.push(extraCopy);
+            }
+        }
+        member.skills = skills;
+        return member;
+    });
+}
+
+// =============================================
+//  レンダリング
+// =============================================
+function renderAll() {
+    renderBoss();
+    renderParty();
+    renderUI();
+}
+
+function renderBoss() {
+    const b = state.boss;
+    const pct = Math.max(0, b.hp / b.maxHp * 100);
+    const mpPct = Math.max(0, b.mp / b.maxMp * 100);
+    document.getElementById('boss-hp').textContent = Math.max(0, b.hp);
+    document.getElementById('boss-max-hp').textContent = b.maxHp;
+    document.getElementById('boss-hp-fill').style.width = pct + '%';
+    document.getElementById('boss-mp').textContent = Math.max(0, b.mp);
+    document.getElementById('boss-max-mp').textContent = b.maxMp;
+    document.getElementById('boss-mp-fill').style.width = mpPct + '%';
+    document.getElementById('boss-atk').textContent = b.atk;
+    document.getElementById('boss-def').textContent = b.def;
+
+    // HP色
+    const fill = document.getElementById('boss-hp-fill');
+    if (pct > 60)       fill.style.background = 'linear-gradient(90deg,#2a7a2a,#44dd44)';
+    else if (pct > 30)  fill.style.background = 'linear-gradient(90deg,#7a7a2a,#dddd44)';
+    else                fill.style.background = 'linear-gradient(90deg,#7a2a2a,#dd4444)';
+
+    // 状態異常
+    const seEl = document.getElementById('boss-status-effects');
+    seEl.textContent = state.bossStatusEffects.length > 0
+        ? '⚠ ' + state.bossStatusEffects.map(e => `${e.name}(${e.turnsLeft})`).join('  ')
+        : '';
+}
+
+function renderParty(targetMode = false) {
+    const grid = document.getElementById('party-grid');
+    grid.innerHTML = '';
+    state.party.forEach(m => {
+        const pct = Math.max(0, m.hp / m.maxHp * 100);
+        const dead = m.hp <= 0;
+        const card = document.createElement('div');
+
+        // ターゲット選択モード時のクラス制御
+        let cardClass = 'member-card' + (dead ? ' dead' : '');
+        if (targetMode) cardClass += ' targetable';
+        card.className = cardClass;
+        card.id = 'card-' + m.id;
+
+        // 生存メンバーのみクリックでターゲット確定
+        if (targetMode && !dead) {
+            card.onclick = () => selectTarget(m.id);
+        } else {
+            card.onclick = null;
+        }
+
+        const effects = [];
+        if (m.buffAtk > 1) effects.push('攻↑');
+        if (m.buffDef > 1) effects.push('守↑');
+        if (m.hasBarrier)  effects.push('障壁');
+        if (m.statusEffects && m.statusEffects.length > 0)
+            effects.push(...m.statusEffects.map(e => e.name));
+
+        card.innerHTML = `
+            <div class="member-top">
+                <span class="member-name">${m.icon} ${m.name}</span>
+                <span class="member-role">${m.role}</span>
+            </div>
+            <div class="member-hp-text">HP: ${Math.max(0, m.hp)} / ${m.maxHp} ${dead ? '【戦闘不能】' : ''}</div>
+            <div class="member-hp-bar">
+                <div class="member-hp-fill" id="hpfill-${m.id}" style="width:${pct}%;
+                    ${pct > 50 ? '' : pct > 25 ? 'background:linear-gradient(90deg,#aa7700,#ffcc00);' : 'background:linear-gradient(90deg,#aa2200,#ff4400);'}
+                "></div>
+            </div>
+            <div class="member-mp-text">MP: ${Math.max(0, m.mp)} / ${m.maxMp}</div>
+            <div class="member-mp-bar">
+                <div class="member-mp-fill" id="mpfill-${m.id}" style="width:${Math.max(0, m.mp / m.maxMp * 100)}%"></div>
+            </div>
+            <div class="member-status">${effects.length > 0 ? effects.join(' / ') : ''}</div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+function renderUI() {
+    document.getElementById('kill-count').textContent = state.killCount;
+    document.getElementById('challenge-count').textContent = state.challengeCount;
+    document.getElementById('party-level').textContent = state.partyLevel;
+    document.getElementById('strengthen-count').textContent = state.strengthenCount;
+    document.getElementById('turn-count').textContent = state.turnCount;
+}
+
+// =============================================
+//  バトルログ
+// =============================================
+function addLog(cls, msg) {
+    const log = document.getElementById('battle-log');
+    const line = document.createElement('div');
+    line.className = 'log-' + cls;
+    line.innerHTML = msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+}
+
+// =============================================
+//  ターン表示
+// =============================================
+function setTurnIndicator(who) {
+    const el = document.getElementById('turn-indicator');
+    if (who === 'player') {
+        el.textContent = '▶ 魔王のターン — 行動を選択してください';
+        el.className = 'turn-indicator player-turn';
+    } else if (who === 'enemy') {
+        el.textContent = '⚔ 勇者パーティの攻撃！';
+        el.className = 'turn-indicator enemy-turn';
+    } else {
+        el.textContent = '';
+        el.className = 'turn-indicator';
+    }
+}
+
+// =============================================
+//  ボタン有効／無効
+// =============================================
+function setButtonsEnabled(enabled) {
+    for (let i = 1; i <= 4; i++) {
+        document.getElementById('btn-s' + i).disabled = !enabled;
+    }
+}
+
+// =============================================
+//  乱数ヘルパー
+// =============================================
+function rng(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// =============================================
+//  生存メンバー取得
+// =============================================
+function aliveMembers() {
+    return state.party.filter(m => m.hp > 0);
+}
+function deadMembers() {
+    return state.party.filter(m => m.hp <= 0);
+}
+
+// =============================================
+//  プレイヤー（魔王）行動
+// =============================================
+
+// スキルが単体ターゲット必要かどうか
+function skillNeedsTarget(skillIndex) {
+    // 0:闇の一撃(単体)  1:ダークネス(全体=不要)  2:魔王の圧制(単体)  3:生命吸収(単体)
+    return skillIndex !== 1;
+}
+
+// スキルボタン押下 — 単体スキルはターゲット選択モードへ
+function playerAction(skillIndex) {
+    if (state.isAnimating || state.phase !== 'player') return;
+
+    const alive = aliveMembers();
+    if (alive.length === 0) return;
+
+    // MP不足フォールバック確認（表示上の案内）
+    const mpCost = BOSS_MP_COST[skillIndex] || 0;
+    const b = state.boss;
+    // ターン開始MPは実行時に加算するのでここでは仮値で確認
+    const mpAfterRegen = Math.min(b.maxMp, b.mp + b.mpRegen);
+    let actualIndex = skillIndex;
+    if (mpCost > 0 && mpAfterRegen < mpCost) {
+        actualIndex = 0; // フォールバック確定 → 闇の一撃（単体）
+    }
+
+    if (skillNeedsTarget(actualIndex)) {
+        // ターゲット選択モードへ
+        state.pendingSkill = skillIndex; // 元のindexを保存（フォールバックはexecutePlayer内で処理）
+        enterTargetSelectMode();
+    } else {
+        // 全体攻撃はそのまま実行
+        executePlayerSkill(skillIndex, null);
+    }
+}
+
+// ターゲット選択モード開始
+function enterTargetSelectMode() {
+    const skillNames = ['闇の一撃', 'ダークネス', '魔王の圧制', '生命吸収'];
+    const idx = state.pendingSkill;
+    document.getElementById('target-banner').classList.add('show');
+    document.getElementById('target-banner-skill').textContent = `【${skillNames[idx]}】`;
+    document.getElementById('turn-indicator').textContent = '👆 攻撃対象を選択';
+    document.getElementById('turn-indicator').className = 'turn-indicator enemy-turn';
+
+    // カードをターゲット可能スタイルに
+    renderParty(true);
+}
+
+// ターゲット選択キャンセル
+function cancelTargetSelect() {
+    state.pendingSkill = null;
+    document.getElementById('target-banner').classList.remove('show');
+    renderParty(false);
+    setTurnIndicator('player');
+}
+
+// カードクリックでターゲット確定
+function selectTarget(memberId) {
+    if (state.pendingSkill === null) return;
+    const member = state.party.find(m => m.id === memberId);
+    if (!member || member.hp <= 0) return; // 死亡済みは選択不可
+
+    const skillIndex = state.pendingSkill;
+    state.pendingSkill = null;
+    document.getElementById('target-banner').classList.remove('show');
+    renderParty(false);
+
+    executePlayerSkill(skillIndex, member);
+}
+
+// 実際のスキル実行（targetはnull=全体）
+function executePlayerSkill(skillIndex, target) {
+    state.isAnimating = true;
+    setButtonsEnabled(false);
+    state.turnCount++;
+
+    // MP再生（毎ターン開始時）
+    const b = state.boss;
+    b.mp = Math.min(b.maxMp, b.mp + b.mpRegen);
+
+    renderUI();
+
+    const alive = aliveMembers();
+    if (alive.length === 0) { checkVictory(); return; }
+
+    let logLines = [];
+    const mpCost = BOSS_MP_COST[skillIndex] || 0;
+
+    // MP不足チェック — 不足なら闇の一撃にフォールバック
+    let actualIndex = skillIndex;
+    let actualTarget = target;
+    if (mpCost > 0 && b.mp < mpCost) {
+        logLines.push(['boss', `MPが不足している！（必要: ${mpCost}　現在: ${b.mp}）`]);
+        logLines.push(['boss', `やむなく <b>闇の一撃</b> を放つ！`]);
+        actualIndex = 0;
+        // フォールバック先が単体なのにtargetがnullの場合は自動選択
+        if (!actualTarget) actualTarget = pickWeakestOrRandom(alive);
+    } else if (mpCost > 0) {
+        b.mp -= mpCost;
+    }
+
+    // targetがnullのまま単体スキルになった場合（念のため）
+    if (skillNeedsTarget(actualIndex) && !actualTarget) {
+        actualTarget = pickWeakestOrRandom(alive);
+    }
+
+    switch (actualIndex) {
+        case 0: { // 闇の一撃 — 単体物理
+            const dmg = calcDamage(b.atk, actualTarget.def, 1.0, 0.2);
+            applyDamageToMember(actualTarget, dmg);
+            logLines.push(['boss', `<b>闇の一撃</b>！${actualTarget.icon}${actualTarget.name}に <span class="log-damage">${dmg}ダメージ</span>！`]);
+            animateCard('card-' + actualTarget.id, 'anim-flash-red');
+            break;
+        }
+        case 1: { // ダークネス — 全体魔法
+            logLines.push(['boss', `<b>ダークネス</b>を展開！全員を呪縛する！`]);
+            alive.forEach(tgt => {
+                const dmg = calcDamage(b.atk * 0.75, tgt.def * 0.5, 0.8, 0.15);
+                applyDamageToMember(tgt, dmg);
+                logLines.push(['boss', `　${tgt.icon}${tgt.name}に <span class="log-damage">${dmg}ダメージ</span>！`]);
+                animateCard('card-' + tgt.id, 'anim-flash-red');
+            });
+            break;
+        }
+        case 2: { // 魔王の圧制 — 超火力単体（必中）
+            const dmg = calcDamage(b.atk, actualTarget.def, 5.0, 0.3);
+            applyDamageToMember(actualTarget, dmg);
+            logLines.push(['boss', `<b>魔王の圧制</b>！！${actualTarget.icon}${actualTarget.name}に <span class="log-damage">${dmg}ダメージ</span>！！`]);
+            animateCard('card-' + actualTarget.id, 'anim-flash-red');
+            break;
+        }
+        case 3: { // 生命吸収 — 単体攻撃＋回復
+            const dmg = calcDamage(b.atk, actualTarget.def, 1.1, 0.2);
+            applyDamageToMember(actualTarget, dmg);
+            const heal = Math.floor(dmg * 0.6);
+            b.hp = Math.min(b.maxHp, b.hp + heal);
+            logLines.push(['boss', `<b>生命吸収</b>！${actualTarget.icon}${actualTarget.name}から <span class="log-damage">${dmg}ダメージ</span> 吸収！`]);
+            logLines.push(['boss', `魔王のHPが <span class="log-heal">+${heal}</span> 回復した！`]);
+            animateCard('card-' + actualTarget.id, 'anim-flash-red');
+            animateCard('boss-panel', 'anim-flash-green');
+            break;
+        }
+    }
+
+    logLines.forEach(([cls, msg]) => addLog(cls, msg));
+
+    // 勝利チェック
+    if (aliveMembers().length === 0) {
+        setTimeout(() => {
+            renderAll();
+            checkVictory();
+        }, 400);
+        return;
+    }
+
+    // 敵ターンへ
+    setTimeout(() => {
+        renderAll();
+        proceedToEnemyTurn();
+    }, 500);
+}
+
+// =============================================
+//  ダメージ計算
+// =============================================
+function calcDamage(atk, def, multiplier, variance) {
+    const base = Math.max(1, atk * multiplier - def * 0.5);
+    const v = 1 + (Math.random() * variance * 2 - variance);
+    return Math.max(1, Math.floor(base * v));
+}
+
+// =============================================
+//  メンバーへのダメージ適用
+// =============================================
+function applyDamageToMember(member, dmg) {
+    if (member.hasBarrier) {
+        member.hasBarrier = false;
+        addLog('system', `　${member.icon}${member.name}の障壁がダメージを防いだ！`);
+        return;
+    }
+    const actualDef = member.buffDef > 1 ? member.def * member.buffDef : member.def;
+    const reduced = Math.max(1, dmg - Math.floor(actualDef * 0.2));
+    member.hp = Math.max(0, member.hp - reduced);
+}
+
+// =============================================
+//  弱いメンバーを優先選択（戦略的ターゲット）
+// =============================================
+function pickWeakestOrRandom(alive) {
+    // 50%の確率で最低HP狙い、50%でランダム
+    if (Math.random() < 0.5) {
+        return alive.reduce((a, b) => a.hp < b.hp ? a : b);
+    }
+    return pick(alive);
+}
+
+// =============================================
+//  敵（勇者パーティ）ターン
+// =============================================
+function proceedToEnemyTurn() {
+    setTurnIndicator('enemy');
+    state.phase = 'enemy';
+
+    // 速度順にソート
+    const turnOrder = [...state.party]
+        .filter(m => m.hp > 0)
+        .sort((a, b) => b.spd - a.spd);
+
+    let delay = 200;
+    turnOrder.forEach(member => {
+        setTimeout(() => {
+            if (state.boss.hp <= 0) return;
+            executeMemberAction(member);
+            renderAll();
+
+            // 魔王HP0チェック — 既に over でなければ
+            if (state.boss.hp <= 0 && state.phase !== 'over') {
+                state.phase = 'over';
+                setTimeout(() => checkDefeat(), 300);
+            }
+        }, delay);
+        delay += 700;
+    });
+
+    // 全員行動後にプレイヤーターンへ
+    setTimeout(() => {
+        if (state.phase === 'over') return; // 既に勝敗が決している場合はスキップ
+        if (state.boss.hp > 0 && aliveMembers().length > 0) {
+            tickStatusEffects();
+            renderAll();
+            state.phase = 'player';
+            state.isAnimating = false;
+            setButtonsEnabled(true);
+            setTurnIndicator('player');
+        } else if (aliveMembers().length === 0) {
+            // 敵ターン中に全滅した場合の勝利処理
+            renderAll();
+            checkVictory();
+        }
+    }, delay + 200);
+}
+
+// =============================================
+//  メンバー個別行動
+// =============================================
+function executeMemberAction(member) {
+    if (member.hp <= 0) return;
+
+    // MPターン再生
+    member.mp = Math.min(member.maxMp, member.mp + member.mpRegen);
+
+    const boss = state.boss;
+    const skills = member.skills;
+
+    // MP足りるスキルだけ候補に入れる（なければMP0スキルか通常攻撃）
+    const affordableSkills = skills.filter(s => (s.mpCost || 0) <= member.mp);
+    const skillPool = affordableSkills.length > 0 ? affordableSkills : skills.filter(s => (s.mpCost || 0) === 0);
+
+    const skill = chooseSkill(member, skillPool.length > 0 ? skillPool : skills, member.mp);
+
+    // MP不足フォールバック（念のため）
+    const actualMpCost = skill.mpCost || 0;
+    if (actualMpCost > member.mp) {
+        // MPが足りないのでコスト0の攻撃を探す
+        const fallback = skills.find(s => (s.mpCost || 0) === 0) || skills[0];
+        addLog(member.id, `${member.icon}${member.name}はMPが足りない！通常攻撃を行う！`);
+        const effectiveAtk = Math.floor(member.atk * (member.buffAtk || 1));
+        const dmg = calcDamage(effectiveAtk, boss.def, fallback.power || 0.9, 0.2);
+        boss.hp = Math.max(0, boss.hp - dmg);
+        addLog(member.id, `${member.icon}${member.name}の<b>${fallback.name}</b>！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+        animateCard('boss-panel', 'anim-flash-red');
+        return;
+    }
+
+    // MPを消費
+    if (actualMpCost > 0) {
+        member.mp -= actualMpCost;
+    }
+
+    switch (skill.type) {
+        case 'atk': {
+            const effectiveAtk = Math.floor(member.atk * (member.buffAtk || 1));
+            const dmg = calcDamage(effectiveAtk, boss.def, skill.power, 0.2);
+            boss.hp = Math.max(0, boss.hp - dmg);
+            addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+            animateCard('boss-panel', 'anim-flash-red');
+            break;
+        }
+        case 'magic': {
+            const effectiveAtk = Math.floor(member.atk * (member.buffAtk || 1));
+            if (skill.target === 'all') {
+                const dmg = calcDamage(effectiveAtk, boss.def * 0.5, skill.power, 0.2);
+                boss.hp = Math.max(0, boss.hp - dmg);
+                addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>（全体魔法）！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+                animateCard('boss-panel', 'anim-flash-red');
+            } else {
+                const dmg = calcDamage(effectiveAtk, boss.def * 0.5, skill.power, 0.2);
+                boss.hp = Math.max(0, boss.hp - dmg);
+                addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+                animateCard('boss-panel', 'anim-flash-red');
+            }
+            break;
+        }
+        case 'heal': {
+            if (skill.target === 'all_ally') {
+                const alive = aliveMembers();
+                alive.forEach(m => {
+                    const healAmt = Math.floor(m.maxHp * 0.3 * (1 + (state.strengthenCount * 0.1)));
+                    m.hp = Math.min(m.maxHp, m.hp + healAmt);
+                    addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！${m.icon}${m.name}のHPが <span class="log-heal">+${healAmt}</span> 回復！`);
+                });
+            } else {
+                const tgt = pick(aliveMembers());
+                const healAmt = Math.floor(tgt.maxHp * 0.4 * (1 + (state.strengthenCount * 0.1)));
+                tgt.hp = Math.min(tgt.maxHp, tgt.hp + healAmt);
+                addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！${tgt.icon}${tgt.name}のHPが <span class="log-heal">+${healAmt}</span> 回復！`);
+            }
+            break;
+        }
+        case 'buff_atk': {
+            aliveMembers().forEach(m => { m.buffAtk = skill.power; });
+            addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！パーティの攻撃力が上昇した！`);
+            break;
+        }
+        case 'buff_def': {
+            aliveMembers().forEach(m => { m.buffDef = skill.power; });
+            addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！パーティの防御力が上昇した！`);
+            break;
+        }
+        case 'barrier': {
+            aliveMembers().forEach(m => { m.hasBarrier = true; });
+            addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！パーティに防御障壁が張られた！`);
+            break;
+        }
+        case 'revive': {
+            const dead = deadMembers();
+            if (dead.length > 0) {
+                const tgt = pick(dead);
+                tgt.hp = Math.floor(tgt.maxHp * 0.4);
+                addLog(member.id, `${member.icon}${member.name}の<b>${skill.name}</b>！${tgt.icon}${tgt.name}が復活した！`);
+            } else {
+                // 代替：通常攻撃
+                const effectiveAtk = Math.floor(member.atk * (member.buffAtk || 1));
+                const dmg = calcDamage(effectiveAtk, boss.def, 0.8, 0.2);
+                boss.hp = Math.max(0, boss.hp - dmg);
+                addLog(member.id, `${member.icon}${member.name}の<b>攻撃</b>！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+                animateCard('boss-panel', 'anim-flash-red');
+            }
+            break;
+        }
+        default: {
+            const effectiveAtk = Math.floor(member.atk * (member.buffAtk || 1));
+            const dmg = calcDamage(effectiveAtk, boss.def, 0.9, 0.2);
+            boss.hp = Math.max(0, boss.hp - dmg);
+            addLog(member.id, `${member.icon}${member.name}の攻撃！魔王に <span class="log-damage">${dmg}ダメージ</span>！`);
+            animateCard('boss-panel', 'anim-flash-red');
+        }
+    }
+}
+
+// =============================================
+//  スキル選択AI
+// =============================================
+function chooseSkill(member, skills, memberMp) {
+    // mpが渡されていない場合は member.mp を使う
+    const availableMp = (memberMp !== undefined) ? memberMp : (member.mp || 999);
+    // 使えるスキルのみにフィルタ（念のため再確認）
+    const usable = skills.filter(s => (s.mpCost || 0) <= availableMp);
+    const pool = usable.length > 0 ? usable : skills;
+
+    if (pool.length === 1) return pool[0];
+
+    const alive = aliveMembers();
+    const boss = state.boss;
+
+    // 僧侶の回復判断：誰かHPが50%以下なら回復優先
+    if (member.id === 'priest') {
+        const injured = alive.filter(m => m.hp < m.maxHp * 0.5);
+        const healSkill = pool.find(s => s.type === 'heal' || s.type === 'revive');
+        const reviveSkill = pool.find(s => s.type === 'revive');
+        if (reviveSkill && deadMembers().length > 0) return reviveSkill;
+        if (healSkill && injured.length > 0 && Math.random() < 0.8) return healSkill;
+    }
+
+    // バフ系は最初のターン優先
+    if (state.turnCount <= 2) {
+        const buffSkill = pool.find(s => s.type === 'buff_atk' || s.type === 'buff_def' || s.type === 'barrier');
+        if (buffSkill && Math.random() < 0.6) return buffSkill;
+    }
+
+    // 魔王HP低下時：パーティ全員が高火力スキルを使いやすくなる
+    const bossPct = boss.hp / boss.maxHp;
+    if (bossPct < 0.3) {
+        const powerSkill = pool.reduce((best, s) => s.power > best.power ? s : best, pool[0]);
+        if (Math.random() < 0.7) return powerSkill;
+    }
+
+    // それ以外はランダムに、ただし全体系を少し優先
+    const weighted = [];
+    pool.forEach(s => {
+        const w = (s.target === 'all' || s.target === 'all_ally') ? 2 : 1;
+        for (let i = 0; i < w; i++) weighted.push(s);
+    });
+    return pick(weighted);
+}
+
+// =============================================
+//  状態異常ティック
+// =============================================
+function tickStatusEffects() {
+    state.bossStatusEffects = state.bossStatusEffects
+        .map(e => ({ ...e, turnsLeft: e.turnsLeft - 1 }))
+        .filter(e => e.turnsLeft > 0);
+}
+
+// =============================================
+//  アニメーション
+// =============================================
+function animateCard(id, cls) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add(cls);
+    setTimeout(() => el.classList.remove(cls), 400);
+}
+
+// =============================================
+//  勝利・敗北チェック
+// =============================================
+function checkVictory() {
+    if (state.phase === 'over' && document.getElementById('modal-victory').classList.contains('show')) return;
+    state.phase = 'over';
+    state.killCount++;
+    state.challengeCount++;
+    state.strengthenCount++;
+
+    renderAll();
+    addLog('system', `━━━ 勇者パーティを撃退！（${state.killCount}回目）━━━`);
+
+    // 次の強化内容をプレビュー
+    const nextScale = Math.floor((1 + state.strengthenCount * 0.3) * 100);
+    const newSkillInfo = getNewSkillPreview(state.strengthenCount);
+
+    const body = document.getElementById('modal-victory-body');
+    body.innerHTML = `
+        勇者パーティを見事に撃退した！<br>
+        しかし彼らは生き延びて修行を重ねるだろう…<br><br>
+        <div class="strengthen-list">
+            🔺 次の挑戦者の強化内容<br>
+            ・全ステータス <b>${nextScale}%</b> に上昇<br>
+            ・レベル：<b>${1 + state.strengthenCount * 8}</b><br>
+            ${newSkillInfo ? '・新スキル解放：' + newSkillInfo : ''}
+        </div>
+        撃退数：<b>${state.killCount}</b> 回
+    `;
+    document.getElementById('modal-victory').classList.add('show');
+}
+
+function checkDefeat() {
+    if (state.phase === 'over' && document.getElementById('modal-defeat').classList.contains('show')) return;
+
+    // ── 1回限りの復活処理 ──
+    if (!state.bossRevived) {
+        state.bossRevived = true;
+        state.phase = 'enemy'; // フェーズをリセットしてバトルを継続
+
+        const b = state.boss;
+        const newMaxHp = b.maxHp * 2;
+        b.maxHp = newMaxHp;
+        b.hp    = newMaxHp;      // HPを倍にして全回復
+        b.mp    = b.maxMp;       // MPも全回復
+
+        renderAll();
+        addLog('system', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        addLog('boss',   '…ぐっ…！まだだ…まだ終わらぬ…！！');
+        addLog('boss',   '🔥 <b>魔王、奥義解放！真の姿を現す！！</b> 🔥');
+        addLog('boss',   `HPが <span class="log-heal">${newMaxHp}</span> に増大し、MPが完全回復した！`);
+        addLog('system', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+        // 敵の残りターン行動が終わったあとプレイヤーターンへ戻す
+        setTimeout(() => {
+            if (state.boss.hp > 0 && aliveMembers().length > 0) {
+                state.phase = 'player';
+                state.isAnimating = false;
+                setButtonsEnabled(true);
+                setTurnIndicator('player');
+            }
+        }, 800);
+        return;
+    }
+
+    // ── 2回目の敗北：本当のゲームオーバー ──
+    state.phase = 'over';
+    setButtonsEnabled(false);
+    renderAll();
+    addLog('system', '━━━ 魔王、ついに討伐される…！ ━━━');
+
+    const body = document.getElementById('modal-defeat-body');
+    body.innerHTML = `
+        勇者パーティに敗北してしまった…<br>
+        撃退数：<b>${state.killCount}</b> 回<br>
+        挑戦回数：<b>${state.challengeCount}</b> 回目<br><br>
+        もう一度立ち上がれ！
+    `;
+    document.getElementById('modal-defeat').classList.add('show');
+}
+
+function getNewSkillPreview(strengthenCount) {
+    if (strengthenCount <= 0) return '';
+    const idx = Math.min(strengthenCount - 1, UPGRADE_SKILLS.length - 1);
+    const upgrades = UPGRADE_SKILLS[idx];
+    const names = Object.values(upgrades).map(s => s.name);
+    return names.join(' / ');
+}
+
+// =============================================
+//  次バトル開始（撃退後）
+// =============================================
+function startNextBattle() {
+    document.getElementById('modal-victory').classList.remove('show');
+    initGame();
+}
+
+// =============================================
+//  ゲームリセット（敗北後）
+// =============================================
+function restartGame() {
+    document.getElementById('modal-defeat').classList.remove('show');
+    state.killCount = 0;
+    state.challengeCount = 1;
+    state.strengthenCount = 0;
+    state.partyLevel = 1;
+    state.bossRevived = false;
+    initGame();
+}
+
+// =============================================
+//  ゲーム起動
+// =============================================
+function startGame() {
+    document.getElementById('start-screen').classList.add('hidden');
+    initGame();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  // Cloudflare Workers の設定ファイル
+  "name": "rpg-maojoubouei",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-25",
+
+  // Workers の実行環境
+  // "nodejs_compat" は Node.js 互換モード（今回は不要だが将来の拡張用に記載）
+  // "compatibility_flags": ["nodejs_compat"],
+
+  // デプロイ対象のルート（Workers.dev のサブドメインで公開）
+  "workers_dev": true,
+
+  // .html ファイルを文字列としてバンドルするルール
+  "rules": [
+    { "type": "Text", "globs": ["**/*.html"], "fallthrough": false }
+  ]
+}

@@ -1,0 +1,17 @@
+# 依存パッケージ
+node_modules/
+
+# ビルド成果物
+dist/
+
+# 環境変数・シークレット
+.env
+.env.*
+!.env.example
+
+# Wrangler のローカルキャッシュ・一時ファイル
+.wrangler/
+
+# OS 生成ファイル
+.DS_Store
+Thumbs.db
